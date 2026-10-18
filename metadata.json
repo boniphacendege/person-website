@@ -1,0 +1,7 @@
+{
+  "name": "Ev Dr. Boniphace J. Ndege - Global Shopping & Creator Hub",
+  "description": "Personal ecosystem, media, books, videos, live conferencing, messaging, and Global Shopping marketplace by Ev Dr. Boniphace J. Ndege.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

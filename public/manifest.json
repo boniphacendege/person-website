@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Boniphace Ndege — Creator Hub & Reading Library",
+  "short_name": "BoniphaceHub",
+  "description": "Read blogs, book excerpts, and shop online with full offline data support.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#063b22",
+  "background_color": "#07160f",
+  "icons": [
+    {
+      "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

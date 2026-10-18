@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-green: #087a45;
+    --brand-green-vibrant: #00a651;
+    --brand-green-dark: #075c36;
+    --brand-gold: #d4af37;
+    --brand-gold-pure: #ffd700;
+    --brand-gold-light: #f3d46b;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    background-color: #f7faf8;
+    color: #17211c;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .font-editorial {
+    font-family: 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
+  }
+}
+
+/* Low-bright dark green neon & pure gold decorative utilities */
+.neon-green-glow {
+  box-shadow: 0 0 14px -2px rgba(5, 150, 105, 0.32), 0 0 28px -4px rgba(6, 78, 59, 0.22);
+}
+
+.neon-header-glow {
+  box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.08),
+              0 0 16px -2px rgba(4, 120, 87, 0.28),
+              0 1px 0 0 rgba(255, 215, 0, 0.35);
+}
+
+.dark .neon-header-glow {
+  box-shadow: 0 6px 26px -3px rgba(0, 0, 0, 0.65),
+              0 0 22px -3px rgba(5, 150, 105, 0.38),
+              0 0 38px -6px rgba(4, 90, 65, 0.28),
+              0 1px 0 0 rgba(255, 215, 0, 0.45);
+}
+
+/* Card Styling: Green + Pure Gold Mixer + Low-Bright Dark Green Neon */
+.card-neon-gold {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid rgba(8, 122, 69, 0.2);
+  box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.05),
+              0 0 15px -3px rgba(5, 120, 75, 0.16),
+              0 0 0 1px rgba(212, 175, 55, 0.16);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .card-neon-gold {
+  background-color: #091710;
+  border: 1px solid rgba(16, 185, 129, 0.26);
+  box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.65),
+              0 0 18px -3px rgba(6, 95, 70, 0.35),
+              0 0 32px -6px rgba(4, 120, 87, 0.22),
+              0 0 0 1px rgba(255, 215, 0, 0.2);
+}
+
+.card-neon-gold:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.12),
+              0 0 22px -2px rgba(16, 185, 129, 0.32),
+              0 0 36px -6px rgba(5, 150, 105, 0.25),
+              0 0 12px 0px rgba(255, 215, 0, 0.28);
+  transform: translateY(-2px);
+}
+
+.dark .card-neon-gold:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.8),
+              0 0 26px -2px rgba(16, 185, 129, 0.42),
+              0 0 40px -6px rgba(5, 150, 105, 0.3),
+              0 0 16px 1px rgba(255, 215, 0, 0.32);
+  transform: translateY(-2px);
+}
+
+/* Pure gold and green metallic trims */
+.gold-neon-trim {
+  background: linear-gradient(90deg, #059669 0%, #ffd700 50%, #059669 100%);
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.35), 0 0 6px rgba(255, 215, 0, 0.4);
+}
+
+.badge-gold-pure {
+  background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+  color: #081910;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+}
+
+.badge-green-gold {
+  background: linear-gradient(135deg, rgba(8, 122, 69, 0.9) 0%, rgba(212, 175, 55, 0.85) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.25);
+}
+
+.text-gold-pure {
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+.text-green-gold-gradient {
+  background: linear-gradient(135deg, #34d399 0%, #ffd700 50%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(8, 122, 69, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(8, 122, 69, 0.4);
+}
+
