@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   Users,
@@ -35,11 +35,12 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
   language = 'English',
   onShowToast,
 }) => {
-  if (!isOpen) return null;
-
   const isSwahili = language === 'Swahili';
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'following' | 'verified'>('all');
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  if (!isOpen) return null;
 
   const filteredMembers = members.filter((m) => {
     const query = searchQuery.toLowerCase().trim();
@@ -71,51 +72,51 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-[#081810] text-white w-full max-w-4xl rounded-3xl border border-emerald-500/30 shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="bg-[#06160e] text-white w-full max-w-6xl xl:max-w-7xl rounded-3xl border border-emerald-500/40 shadow-[0_0_80px_rgba(0,0,0,0.95)] overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="p-5 sm:p-6 pb-4 border-b border-emerald-950/60 bg-[#06140d] flex items-start justify-between gap-4">
+        <div className="p-5 sm:p-7 pb-4 border-b border-emerald-950/70 bg-[#04110b] flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#ffd700] animate-pulse" />
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#ffd700] flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                {isSwahili ? 'Jamii ya Wafuasi & Wanachama' : 'Community Followers & Members'}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ffd700] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]" />
+              <span className="text-xs font-black uppercase tracking-wider text-[#ffd700] flex items-center gap-1.5">
+                <Users className="w-4 h-4" />
+                {isSwahili ? 'Jamii ya Wafuasi & Wasifu wa Wanachama' : 'Community Followers & Member Profiles'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white font-editorial tracking-tight">
-              {isSwahili ? 'Wafuasi wa Ev Dr. Boniphace J. Ndege' : 'Followers & Community Members'}
+            <h2 className="text-2xl sm:text-3xl font-black text-white font-editorial tracking-tight">
+              {isSwahili ? 'Wafuasi wa Ev Dr. Boniphace J. Ndege' : 'Ev Dr. Boniphace J. Ndege Community Profiles'}
             </h2>
-            <p className="text-xs text-emerald-200/80 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-3xl leading-relaxed">
               {isSwahili
-                ? 'Wanachama wote waliojisajili na wanaomfuata Ev Dr. Boniphace J. Ndege. Kila mwanachama ana wasifu halisi na uwezo wa kufuatana wenyewe kwa wenyewe.'
-                : 'All members who registered and follow Ev Dr. Boniphace J. Ndege. Every member has their own real profile with mutual following enabled.'}
+                ? 'Wanachama wote waliojisajili na wanaomfuata Ev Dr. Boniphace J. Ndege. Kila mwanachama ana wasifu halisi, picha zao wazi na uwezo wa kufuatana wenyewe kwa wenyewe.'
+                : 'All registered community members and followers of Ev Dr. Boniphace J. Ndege. Each member has their own dedicated profile, clear imagery, and mutual follow capabilities.'}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-black/40 hover:bg-black/70 text-slate-300 hover:text-white border border-white/20 transition-all cursor-pointer shrink-0"
+            className="p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-slate-300 hover:text-white border border-white/20 transition-all cursor-pointer shrink-0"
             title="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Filter and Search Bar */}
-        <div className="p-4 sm:px-6 bg-[#07170f] border-b border-emerald-950/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="p-4 sm:px-7 bg-[#05140c] border-b border-emerald-950/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isSwahili ? 'Tafuta mwanachama, jina, eneo...' : 'Search members, role, city...'}
-              className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-black/40 border border-emerald-500/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
+              className="w-full pl-10 pr-3 py-2.5 rounded-xl text-xs bg-black/50 border border-emerald-500/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
             />
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
             {[
               { id: 'all', label: isSwahili ? `Wote (${members.length})` : `All (${members.length})` },
               {
@@ -133,10 +134,10 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-[#ffd700] to-[#f5d061] text-slate-950 shadow-[0_0_10px_rgba(255,215,0,0.35)]'
-                    : 'bg-black/40 text-slate-300 hover:text-white border border-white/10'
+                    ? 'bg-gradient-to-r from-[#ffd700] via-[#f5d061] to-[#d4af37] text-slate-950 font-black shadow-[0_0_12px_rgba(255,215,0,0.4)]'
+                    : 'bg-black/50 text-slate-300 hover:text-white border border-white/10'
                 }`}
               >
                 {tab.label}
@@ -145,11 +146,14 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
           </div>
         </div>
 
-        {/* Member Cards Grid */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Member Cards Grid - Wide and clear imagery with smooth vertical scrolling */}
+        <div
+          ref={listContainerRef}
+          className="p-4 sm:p-7 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 scroll-smooth"
+        >
           {filteredMembers.length === 0 ? (
-            <div className="col-span-full py-12 text-center text-slate-400">
-              <Users className="w-10 h-10 mx-auto text-emerald-600 mb-2 opacity-50" />
+            <div className="col-span-full py-16 text-center text-slate-400">
+              <Users className="w-12 h-12 mx-auto text-emerald-600 mb-3 opacity-50" />
               <p className="text-sm font-semibold">
                 {isSwahili ? 'Hakuna mwanachama aliyepatikana.' : 'No members found matching your search.'}
               </p>
@@ -165,86 +169,45 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
               return (
                 <div
                   key={m.id}
-                  className="rounded-2xl border border-emerald-950 bg-gradient-to-b from-[#0b1f14] to-[#07160e] hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between shadow-lg group"
+                  className="p-5 sm:p-6 rounded-3xl border border-emerald-900/60 bg-gradient-to-b from-[#092014] to-[#05140c] hover:border-emerald-500/50 transition-all flex flex-col sm:flex-row items-start gap-5 shadow-xl group hover:shadow-[0_0_24px_rgba(5,150,105,0.25)]"
                 >
-                  {/* Card Banner */}
-                  <div className="relative h-20 w-full overflow-hidden bg-emerald-950">
+                  {/* Profile Image Wide into Medium Square Box */}
+                  <div
+                    className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 aspect-square rounded-2xl overflow-hidden shrink-0 ring-3 ring-emerald-500/40 border-2 border-[#ffd700]/70 group-hover:border-[#ffd700] shadow-2xl cursor-pointer bg-black/60 self-center sm:self-start"
+                    onClick={() => {
+                      onClose();
+                      onSelectMember(m);
+                    }}
+                  >
                     <img
-                      src={m.bannerUrl}
+                      src={m.avatarUrl || '/src/assets/images/boniphace_avatar_1791315268492.jpg'}
                       alt={m.name}
-                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 filter contrast-105 brightness-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1f14] via-black/40 to-transparent" />
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-black/60 backdrop-blur-xs text-[#ffd700] border border-[#ffd700]/30">
-                      {m.statusBadge}
-                    </div>
+                    <span className="absolute bottom-1.5 right-1.5 p-1 bg-emerald-600 rounded-full text-white shadow-md">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#ffd700]" />
+                    </span>
                   </div>
 
-                  {/* Body with Avatar */}
-                  <div className="px-4 pb-4 -mt-7 relative z-10 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-end justify-between gap-3 mb-2">
-                        <div
-                          className="relative cursor-pointer shrink-0"
-                          onClick={() => {
-                            onClose();
-                            onSelectMember(m);
-                          }}
-                        >
-                          <img
-                            src={m.avatarUrl}
-                            alt={m.name}
-                            className="w-14 h-14 rounded-xl object-cover ring-2 ring-[#0b1f14] shadow-md border border-[#ffd700]/50"
-                          />
-                          <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-600 rounded-full text-white">
-                            <ShieldCheck className="w-3 h-3 text-[#ffd700]" />
-                          </span>
-                        </div>
-
-                        {/* Mutual Follow Button ("within themselves should have follow for") */}
-                        {!isOwn ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onToggleFollowMember(m.id, m.name, !isFollowed);
-                            }}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                              isFollowed
-                                ? 'bg-slate-800 text-emerald-300 border border-emerald-500/40 hover:bg-slate-700'
-                                : 'bg-gradient-to-r from-[#ffd700] via-[#f5d061] to-[#d4af37] text-slate-950 font-black shadow-[0_0_10px_rgba(255,215,0,0.35)] hover:brightness-105'
-                            }`}
-                          >
-                            {isFollowed ? (
-                              <>
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>{isSwahili ? 'Unafuata' : 'Following'}</span>
-                              </>
-                            ) : (
-                              <>
-                                <UserPlus className="w-3.5 h-3.5" />
-                                <span>{isSwahili ? 'Fuata' : 'Follow'}</span>
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <span className="text-[11px] font-bold text-[#ffd700] px-2.5 py-1 rounded-xl bg-black/40 border border-[#ffd700]/30">
-                            {isSwahili ? 'Wasifu Wako' : 'Your Profile'}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Name & Role */}
+                  {/* Card Content & Mutual Follow Capability */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full w-full">
+                    {/* Top Row: Badge, Name & Follow Button */}
+                    <div className="mb-2">
+                      <span className="inline-block px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-black/40 border border-emerald-500/30 text-[#ffd700] mb-1.5">
+                        {m.statusBadge}
+                      </span>
+                      <div className="flex items-start justify-between gap-3">
                       <div
-                        className="cursor-pointer"
+                        className="cursor-pointer min-w-0"
                         onClick={() => {
                           onClose();
                           onSelectMember(m);
                         }}
                       >
-                        <h4 className="text-sm font-black text-white hover:text-[#ffd700] transition-colors">
+                        <h4 className="text-base sm:text-lg font-black text-white hover:text-[#ffd700] transition-colors leading-tight truncate">
                           {m.name}
                         </h4>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                        <div className="flex items-center gap-2 text-xs text-slate-300 mt-1">
                           <span className="text-emerald-400 font-semibold">{m.handle}</span>
                           <span>·</span>
                           <span className="text-slate-300 font-medium">
@@ -253,14 +216,46 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Bio snippet */}
-                      <p className="text-xs text-slate-300 mt-2 line-clamp-2 leading-relaxed">
-                        {isSwahili ? (m.bioSwahili || m.bio) : (m.bio || m.bioSwahili)}
-                      </p>
+                      {/* Follow Button / Your Profile */}
+                      {!isOwn ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onToggleFollowMember(m.id, m.name, !isFollowed);
+                          }}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95 ${
+                            isFollowed
+                              ? 'bg-slate-800 text-emerald-300 border border-emerald-500/40 hover:bg-slate-700 shadow-sm'
+                              : 'bg-gradient-to-r from-[#ffd700] via-[#f5d061] to-[#d4af37] text-slate-950 font-black shadow-[0_0_12px_rgba(255,215,0,0.4)] hover:brightness-105'
+                          }`}
+                        >
+                          {isFollowed ? (
+                            <>
+                              <Check className="w-4 h-4 text-emerald-400" />
+                              <span>{isSwahili ? 'Unafuata' : 'Following'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              <span>{isSwahili ? 'Fuata' : 'Follow'}</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-xs font-bold text-[#ffd700] px-3.5 py-1.5 rounded-xl bg-black/60 border border-[#ffd700]/40 shadow-sm shrink-0">
+                          {isSwahili ? 'Wasifu Wako' : 'Your Profile'}
+                        </span>
+                      )}
                     </div>
+                  </div>
+
+                    {/* Bio snippet */}
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4 line-clamp-3">
+                      {isSwahili ? (m.bioSwahili || m.bio) : (m.bio || m.bioSwahili)}
+                    </p>
 
                     {/* Stats & View Profile Link */}
-                    <div className="pt-3 mt-3 border-t border-emerald-950/80 flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="pt-3 border-t border-emerald-950/90 flex items-center justify-between text-xs text-slate-400">
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-white">
                           {m.followersCount >= 1000
@@ -271,8 +266,8 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
                           </span>
                         </span>
                         <span>·</span>
-                        <span className="flex items-center gap-1 text-slate-300">
-                          <MapPin className="w-3 h-3 text-[#ffd700]" />
+                        <span className="flex items-center gap-1.5 text-slate-300">
+                          <MapPin className="w-3.5 h-3.5 text-[#ffd700]" />
                           {m.location}
                         </span>
                       </div>
@@ -283,10 +278,10 @@ export const CommunityMembersModal: React.FC<CommunityMembersModalProps> = ({
                           onClose();
                           onSelectMember(m);
                         }}
-                        className="text-[#ffd700] hover:text-[#f5d061] font-bold inline-flex items-center gap-1 cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 text-[#ffd700] hover:text-[#f5d061] font-bold inline-flex items-center gap-1.5 cursor-pointer border border-[#ffd700]/30 transition-all text-xs shadow-xs"
                       >
-                        <span>{isSwahili ? 'Wasifu' : 'View Profile'}</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <span>{isSwahili ? 'Tazama Wasifu' : 'View Profile'}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

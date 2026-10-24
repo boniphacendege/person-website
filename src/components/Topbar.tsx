@@ -36,6 +36,7 @@ interface TopbarProps {
   onOpenAuth?: (mode?: 'login' | 'signup') => void;
   onSignOut?: () => void;
   onTriggerPreloader?: () => void;
+  onShowToast?: (msg: string) => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -56,6 +57,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onTriggerPreloader,
   onOpenMyProfile,
   onOpenCommunityFollowers,
+  onShowToast,
 }) => {
   const isSwahili = language === 'Swahili';
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -95,10 +97,12 @@ export const Topbar: React.FC<TopbarProps> = ({
             }}
             className="flex items-center gap-3 group"
           >
-            <div className="relative p-[1.5px] rounded-xl bg-gradient-to-br from-[#ffd700] via-[#00a651] to-[#087a45] shadow-[0_0_14px_rgba(5,150,105,0.35)] group-hover:scale-105 transition-transform">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] bg-gradient-to-br from-[#06331e] to-[#031d10] text-[#ffd700] flex items-center justify-center font-black text-base sm:text-lg border border-[#ffd700]/30 shadow-inner">
-                BN
-              </div>
+            <div className="relative p-[1.5px] rounded-xl bg-gradient-to-br from-[#ffd700] via-[#00a651] to-[#087a45] shadow-[0_0_14px_rgba(5,150,105,0.35)] group-hover:scale-105 transition-transform shrink-0">
+              <img
+                src={profile.avatarUrl || '/src/assets/images/boniphace_avatar_1791315268492.jpg'}
+                alt={profile.name}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] object-cover object-center border border-[#ffd700]/40 shadow-inner"
+              />
             </div>
             <div className="hidden sm:block">
               <span className="font-extrabold text-slate-900 dark:text-emerald-50 text-base leading-tight block group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">

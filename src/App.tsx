@@ -19,7 +19,8 @@ import * as api from './api';
 import { Topbar } from './components/Topbar';
 import { Sidebar } from './components/Sidebar';
 import { ProfileHero } from './components/ProfileHero';
-import { QuickAccess } from './components/QuickAccess';
+import { QuickAccess, DashboardFilter } from './components/QuickAccess';
+import { AdvertisingSection } from './components/AdvertisingSection';
 import { AboutSection } from './components/AboutSection';
 import { SocialFeed } from './components/SocialFeed';
 import { BlogSection } from './components/BlogSection';
@@ -39,6 +40,16 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { AuthModal, AuthMode } from './components/AuthModal';
 import { Preloader } from './components/Preloader';
 import { BookPublishModal } from './components/BookPublishModal';
+import { MemberProfileModal, MemberProfileData } from './components/MemberProfileModal';
+import { CommunityMembersModal } from './components/CommunityMembersModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import {
+  getAllMembersList,
+  getMemberProfile,
+  registerUserMemberProfile,
+  getStoredMembersMap,
+  saveStoredMembersMap,
+} from './data/members';
 import { ArrowUp, WifiOff } from 'lucide-react';
 
 export default function App() {
@@ -148,6 +159,9 @@ export default function App() {
   const [activePlayingVideo, setActivePlayingVideo] = useState<VideoItem | null>(null);
   const [activeLiveMeeting, setActiveLiveMeeting] = useState<Meeting | null>(null);
 
+  // Selective Dashboard view filter ('all', 'blog', 'books', 'videos', 'live', 'messages', 'shop')
+  const [activeDashboardFilter, setActiveDashboardFilter] = useState<DashboardFilter>('all');
+
   // User Authentication State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     try {
@@ -167,6 +181,12 @@ export default function App() {
   const [showPreloader, setShowPreloader] = useState(true);
   const [preloaderTriggerKey, setPreloaderTriggerKey] = useState(0);
 
+  // Community Members & Member Profiles state
+  const [selectedMemberProfile, setSelectedMemberProfile] = useState<MemberProfileData | null>(null);
+  const [isMemberProfileModalOpen, setIsMemberProfileModalOpen] = useState(false);
+  const [isCommunityMembersModalOpen, setIsCommunityMembersModalOpen] = useState(false);
+  const [membersList, setMembersList] = useState<MemberProfileData[]>(() => getAllMembersList());
+
   const handleOpenAuth = (initialMode: AuthMode = 'login') => {
     setAuthModalMode(initialMode);
     setIsAuthModalOpen(true);
@@ -174,7 +194,51 @@ export default function App() {
 
   const handleAuthSuccess = (user: AuthUser, message: string) => {
     setCurrentUser(user);
+    // Register or retrieve member profile for this user
+    registerUserMemberProfile(user);
+    setMembersList(getAllMembersList());
     showToast(message);
+  };
+
+  const handleOpenMemberProfileByName = (name: string) => {
+    const member = getMemberProfile(name);
+    setSelectedMemberProfile(member);
+    setIsMemberProfileModalOpen(true);
+  };
+
+  const handleOpenMyMemberProfile = () => {
+    if (currentUser) {
+      const myProfile = registerUserMemberProfile(currentUser);
+      setSelectedMemberProfile(myProfile);
+      setIsMemberProfileModalOpen(true);
+    } else {
+      handleOpenAuth('signup');
+    }
+  };
+
+  const handleToggleFollowMember = (memberId: string, memberName: string, isNowFollowing: boolean) => {
+    const membersMap = getStoredMembersMap();
+    const key = memberName.toLowerCase().trim();
+    if (membersMap[key]) {
+      membersMap[key].isFollowedByMe = isNowFollowing;
+      membersMap[key].followersCount = Math.max(0, (membersMap[key].followersCount || 100) + (isNowFollowing ? 1 : -1));
+    } else {
+      const target = Object.values(membersMap).find((m) => m.id === memberId || m.name.toLowerCase() === key);
+      if (target) {
+        target.isFollowedByMe = isNowFollowing;
+        target.followersCount = Math.max(0, (target.followersCount || 100) + (isNowFollowing ? 1 : -1));
+      }
+    }
+    saveStoredMembersMap(membersMap);
+    setMembersList(Object.values(membersMap));
+
+    if (currentUser) {
+      const myKey = currentUser.name.toLowerCase().trim();
+      if (membersMap[myKey]) {
+        membersMap[myKey].followingCount = Math.max(0, (membersMap[myKey].followingCount || 0) + (isNowFollowing ? 1 : -1));
+        saveStoredMembersMap(membersMap);
+      }
+    }
   };
 
   const handleSignOut = () => {
@@ -411,7 +475,7 @@ export default function App() {
         }
         if (mList) setMeetings(mList);
       } catch (err) {
-        console.error('Error loading initial data:', err);
+        console.warn('Notice loading initial data:', err);
       }
     }
     loadData();
@@ -482,18 +546,7 @@ export default function App() {
 
   // Navigation Helper with Access Checks
   const scrollToSection = (id: string) => {
-    // If visitor is unauthenticated, redirect to login when opening features
-    if (!currentUser && id !== 'home' && id !== 'about') {
-      handleOpenAuth('login');
-      showToast(
-        language === 'Swahili'
-          ? 'Tafadhali ingia kwenye akaunti yako ili kufungua na kutumia huduma hii.'
-          : 'Please sign in to access and open this feature.'
-      );
-      return;
-    }
-
-    // Protect admin-restricted sections
+    // Admin-only sections require admin authentication
     if (['creator', 'seller', 'dashboard'].includes(id)) {
       if (!currentUser) {
         handleOpenAuth('login');
@@ -587,7 +640,7 @@ export default function App() {
           : 'Profile information, banner and avatar updated successfully!'
       );
     } catch (err) {
-      console.error('Failed to persist profile:', err);
+      console.warn('Profile persist notice:', err);
       setProfile((prev) => ({ ...prev, ...updated }));
       showToast(language === 'Swahili' ? 'Wasifu umesasishwa!' : 'Profile updated!');
     }
@@ -665,9 +718,15 @@ export default function App() {
     }
   };
 
-  const handleCreatePost = async (content: string, tag: string, title?: string) => {
+  const handleCreatePost = async (
+    content: string,
+    tag: string,
+    title?: string,
+    imageUrl?: string,
+    imageAspectRatio?: '1:1' | '16:9'
+  ) => {
     try {
-      const created = await api.createPostApi({ content, tag, title });
+      const created = await api.createPostApi({ content, tag, title, imageUrl, imageAspectRatio });
       setPosts((prev) => [created, ...prev]);
       setProfile((prev) => ({ ...prev, postsCount: prev.postsCount + 1 }));
       showToast(
@@ -939,6 +998,8 @@ export default function App() {
         searchQuery={globalSearch}
         onSearchChange={handleGlobalSearchChange}
         onOpenEditProfile={requireAuth(() => setIsEditProfileOpen(true), 'kuhariri wasifu wako')}
+        onOpenMyProfile={handleOpenMyMemberProfile}
+        onOpenCommunityFollowers={() => setIsCommunityMembersModalOpen(true)}
         language={language}
         onChangeLanguage={(lang) => {
           setLanguage(lang);
@@ -949,6 +1010,7 @@ export default function App() {
         onOpenAuth={handleOpenAuth}
         onSignOut={handleSignOut}
         onTriggerPreloader={handleTriggerPreloader}
+        onShowToast={showToast}
       />
 
       {/* Offline Status Persistent Indicator Banner */}
@@ -973,6 +1035,8 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenEditProfile={() => setIsEditProfileOpen(true)}
+        onOpenMyProfile={handleOpenMyMemberProfile}
+        onOpenCommunityFollowers={() => setIsCommunityMembersModalOpen(true)}
         onShowToast={showToast}
         language={language}
         currentUser={currentUser}
@@ -990,132 +1054,222 @@ export default function App() {
           onNavigate={scrollToSection}
           onShareProfile={handleShareProfile}
           onOpenEditProfile={requireAuth(() => setIsEditProfileOpen(true), 'kuhariri wasifu')}
+          onOpenCommunityFollowers={() => setIsCommunityMembersModalOpen(true)}
           language={language}
         />
 
-        {/* Quick Access */}
+        {/* Quick Access with selective Dashboard filters */}
         <QuickAccess
           onNavigate={scrollToSection}
           language={language}
           currentUser={currentUser}
           onOpenAuth={handleOpenAuth}
           onShowToast={showToast}
-        />
-
-        {/* About Section */}
-        <AboutSection onOpenContact={() => setIsContactModalOpen(true)} language={language} />
-
-        {/* Social Feed & Community */}
-        <SocialFeed
-          posts={posts}
-          profileAvatar={profile.avatarUrl}
-          profileName={profile.name}
-          onOpenCreatePost={requireAuth(() => setIsPostModalOpen(true), 'kuchapisha chapisho')}
-          onLikePost={requireAuth((id) => handleLikePost(id), 'kupenda au kutoa maoni kwenye chapisho')}
-          onSavePost={requireAuth((id) => handleSavePost(id), 'kuhifadhi chapisho')}
-          onCommentPost={requireAuth((id, txt) => handleCommentPost(id, txt), 'kuandika maoni')}
-          onSharePost={(post) => {
-            navigator.clipboard?.writeText(window.location.href);
-            showToast(`Post link for "${post.title || post.authorName}" copied!`);
+          activeFilter={activeDashboardFilter}
+          onSelectFilter={(filter) => {
+            setActiveDashboardFilter(filter);
+            if (filter !== 'all') {
+              showToast(
+                language === 'Swahili'
+                  ? `Dashibodi imechujwa: ${filter === 'books' ? 'Vitabu' : filter === 'videos' ? 'Video' : filter === 'blog' ? 'Makala' : filter === 'live' ? 'Mubashara' : filter === 'messages' ? 'Ujumbe' : 'Open Shop'}`
+                  : `Dashboard filtered: ${filter.toUpperCase()}`
+              );
+            }
           }}
-          onFollowUser={requireAuth((personName) => {
-            showToast(`You are now following ${personName}`);
-          }, 'kufuata mwandishi au muundaji')}
-          language={language}
         />
 
-        {/* Blog Articles */}
-        <BlogSection
-          blogs={blogs}
-          onOpenWriteBlog={requireAdmin(() => setIsBlogModalOpen(true), 'Kuandika Makala ya Blog')}
-          onReadArticle={requireAuth((article) => {
-            setActiveReadingMaterial({
-              title: article.title,
-              content: article.content,
-              author: article.author,
-              type: 'blog',
-              category: article.category,
-              readTime: article.readTime,
-              coverUrl: article.imageUrl,
-            });
-          }, 'kufungua na kusoma makala haya')}
-          language={language}
-        />
+        {/* Filtered Dashboard Notice Banner */}
+        {activeDashboardFilter !== 'all' && (
+          <div className="max-w-6xl mx-auto px-4 -mt-4 mb-6">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-[#041e12] via-[#062c1a] to-[#041e12] border-2 border-[#ffd700]/60 shadow-[0_0_24px_rgba(255,215,0,0.25)] flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3">
+                <span className="w-3 h-3 rounded-full bg-[#ffd700] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]" />
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white">
+                    {language === 'Swahili'
+                      ? 'Dashibodi inaonyesha sehemu ya: '
+                      : 'Dashboard currently showing: '}
+                    <span className="text-[#ffd700] font-black uppercase underline decoration-[#ffd700]/50 ml-1">
+                      {activeDashboardFilter === 'books' && (language === 'Swahili' ? 'Vitabu (Books)' : 'Books Marketplace')}
+                      {activeDashboardFilter === 'videos' && (language === 'Swahili' ? 'Video (Videos)' : 'Video Hub')}
+                      {activeDashboardFilter === 'blog' && (language === 'Swahili' ? 'Makala (Blogs)' : 'Blog Articles')}
+                      {activeDashboardFilter === 'live' && (language === 'Swahili' ? 'Mubashara (Live)' : 'Live Room')}
+                      {activeDashboardFilter === 'messages' && (language === 'Swahili' ? 'Ujumbe (Chat)' : 'Chat & Messages')}
+                      {activeDashboardFilter === 'shop' && 'Open Shop'}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-emerald-200/80 mt-0.5">
+                    {language === 'Swahili'
+                      ? 'Sehemu zingine zimefichwa kulingana na chaguo lako. Gusa "Onyesha Zote" kuona zote.'
+                      : 'Other sections are hidden based on your choice. Click "Show All to Dashboard" to see everything.'}
+                  </p>
+                </div>
+              </div>
 
-        {/* Books Marketplace & Publishing */}
-        <BooksSection
-          books={books}
-          onOpenPublishBook={requireAdmin((mode) => {
-            setBookModalInitialMode(mode || 'pdf');
-            setIsBookModalOpen(true);
-          }, 'Kuchapisha Kitabu')}
-          onReadBook={requireAuth((book) => {
-            setActiveReadingMaterial({
-              title: book.title,
-              content: book.sampleContent,
-              author: book.author,
-              type: 'book',
-              category: book.category,
-              coverUrl: book.coverUrl,
-              pdfUrl: book.pdfUrl,
-              pdfFileName: book.pdfFileName,
-              pdfFileSize: book.pdfFileSize,
-              chapters: book.chapters,
-            });
-          }, 'kufungua na kusoma kitabu hiki')}
-          onAddToCart={requireAuth((name, price, image, id) => handleAddToCart(name, price, image, id), 'kuongeza kitabu kwenye kikapu')}
-          onUpdateBookCover={requireAdmin((bookId, coverUrl) => handleUpdateBookCover(bookId, coverUrl), 'Kubadili Jalada la Kitabu')}
-          language={language}
-          onShowToast={showToast}
-        />
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveDashboardFilter('all');
+                  showToast(
+                    language === 'Swahili'
+                      ? 'Dashibodi inaonyesha sehemu zote sasa!'
+                      : 'Dashboard now showing all sections!'
+                  );
+                }}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#f5d061] to-[#d4af37] text-slate-950 font-black text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:brightness-105 transition-all shrink-0 active:scale-95"
+              >
+                <span>{language === 'Swahili' ? 'Onyesha Zote kwenye Dashibodi' : 'Show All to Dashboard'}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* Video Hub */}
-        <VideosSection
-          videos={videos}
-          onOpenUploadVideo={requireAdmin(() => setIsVideoUploadModalOpen(true), 'Kupakia Video')}
-          onPlayVideo={requireAuth((video) => setActivePlayingVideo(video), 'kufungua na kutazama video hii')}
-          language={language}
-        />
+        {/* About Section - shown when 'all' */}
+        {activeDashboardFilter === 'all' && (
+          <AboutSection onOpenContact={() => setIsContactModalOpen(true)} language={language} />
+        )}
 
-        {/* Live Conferencing */}
-        <LiveSection
-          meetings={meetings}
-          onOpenCreateMeeting={requireAdmin(() => setIsMeetingModalOpen(true), 'Kuunda Kikao Kipya')}
-          onJoinMeeting={requireAuth((meeting) => setActiveLiveMeeting(meeting), 'kujiunga na kikao')}
-          onSetReminder={requireAuth((title) => {
-            showToast(`Reminder set for "${title}"`);
-          }, 'kuweka ukumbusho wa kikao')}
-          language={language}
-        />
+        {/* Social Feed & Community - shown when 'all' */}
+        {activeDashboardFilter === 'all' && (
+          <SocialFeed
+            posts={posts}
+            profileAvatar={profile.avatarUrl}
+            profileName={profile.name}
+            onOpenCreatePost={requireAuth(() => setIsPostModalOpen(true), 'kuchapisha chapisho')}
+            onLikePost={requireAuth((id) => handleLikePost(id), 'kupenda au kutoa maoni kwenye chapisho')}
+            onSavePost={requireAuth((id) => handleSavePost(id), 'kuhifadhi chapisho')}
+            onCommentPost={requireAuth((id, txt) => handleCommentPost(id, txt), 'kuandika maoni')}
+            onSharePost={(post) => {
+              navigator.clipboard?.writeText(window.location.href);
+              showToast(`Post link for "${post.title || post.authorName}" copied!`);
+            }}
+            onFollowUser={requireAuth((personName) => {
+              showToast(`You are now following ${personName}`);
+            }, 'kufuata mwandishi au muundaji')}
+            onOpenMemberProfile={handleOpenMemberProfileByName}
+            onOpenCommunityFollowers={() => setIsCommunityMembersModalOpen(true)}
+            language={language}
+          />
+        )}
 
-        {/* Global Shopping Marketplace */}
-        <ShopSection
-          products={products}
-          onAddToCart={requireAuth((name, price, image, id) => handleAddToCart(name, price, image, id), 'kuongeza bidhaa kwenye kikapu')}
-          onOpenCart={requireAuth(() => setIsCartOpen(true), 'kufungua kikapu cha ununuzi')}
-          onOpenAddProduct={requireAdmin(() => setIsAddProductModalOpen(true), 'Kuweka Bidhaa Mpya')}
-          onWishlistToggle={requireAuth((product) => {
-            showToast(`Updated wishlist for ${product.name}`);
-          }, 'kuhifadhi bidhaa')}
-          onOpenProductDetail={requireAuth((prod) => setSelectedProductDetail(prod), 'kufungua maelezo ya kina ya bidhaa')}
-          language={language}
-        />
+        {/* Featured Advertising Section - Selective 1:1 or 9:16 - shown when 'all' */}
+        {activeDashboardFilter === 'all' && (
+          <AdvertisingSection
+            language={language}
+            onOpenContact={(subj) => {
+              setIsContactModalOpen(true);
+            }}
+            onNavigate={scrollToSection}
+            onShowToast={showToast}
+          />
+        )}
 
-        {/* Messages & Chat */}
-        <ChatSection
-          conversations={conversations}
-          activeConversation={activeConversation}
-          messages={messages}
-          onSelectConversation={requireAuth((conv) => setActiveConversation(conv), 'kufungua mazungumzo')}
-          onSendMessage={requireAuth((text) => handleSendMessage(text), 'kutuma ujumbe')}
-          onStartVideoCall={requireAuth((name) => {
-            showToast(`Initiating secure video call with ${name}...`);
-          }, 'kuanza simu ya video')}
-          onStartVoiceCall={requireAuth((name) => {
-            showToast(`Initiating secure voice call with ${name}...`);
-          }, 'kuanza simu ya sauti')}
-          language={language}
-        />
+        {/* Blog Articles - shown when 'all' or 'blog' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'blog') && (
+          <BlogSection
+            blogs={blogs}
+            onOpenWriteBlog={requireAdmin(() => setIsBlogModalOpen(true), 'Kuandika Makala ya Blog')}
+            onShowToast={showToast}
+            onReadArticle={requireAuth((article) => {
+              setActiveReadingMaterial({
+                title: article.title,
+                content: article.content,
+                author: article.author,
+                type: 'blog',
+                category: article.category,
+                readTime: article.readTime,
+                coverUrl: article.imageUrl,
+              });
+            }, 'kufungua na kusoma makala haya')}
+            language={language}
+          />
+        )}
+
+        {/* Books Marketplace & Publishing - shown when 'all' or 'books' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'books') && (
+          <BooksSection
+            books={books}
+            onOpenPublishBook={requireAdmin((mode) => {
+              setBookModalInitialMode(mode || 'pdf');
+              setIsBookModalOpen(true);
+            }, 'Kuchapisha Kitabu')}
+            onReadBook={requireAuth((book) => {
+              setActiveReadingMaterial({
+                title: book.title,
+                content: book.sampleContent,
+                author: book.author,
+                type: 'book',
+                category: book.category,
+                coverUrl: book.coverUrl,
+                pdfUrl: book.pdfUrl,
+                pdfFileName: book.pdfFileName,
+                pdfFileSize: book.pdfFileSize,
+                chapters: book.chapters,
+              });
+            }, 'kufungua na kusoma kitabu hiki')}
+            onAddToCart={requireAuth((name, price, image, id) => handleAddToCart(name, price, image, id), 'kuongeza kitabu kwenye kikapu')}
+            onUpdateBookCover={requireAdmin((bookId, coverUrl) => handleUpdateBookCover(bookId, coverUrl), 'Kubadili Jalada la Kitabu')}
+            language={language}
+            onShowToast={showToast}
+          />
+        )}
+
+        {/* Video Hub - shown when 'all' or 'videos' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'videos') && (
+          <VideosSection
+            videos={videos}
+            onOpenUploadVideo={requireAdmin(() => setIsVideoUploadModalOpen(true), 'Kupakia Video')}
+            onPlayVideo={requireAuth((video) => setActivePlayingVideo(video), 'kufungua na kutazama video hii')}
+            language={language}
+          />
+        )}
+
+        {/* Live Conferencing - shown when 'all' or 'live' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'live') && (
+          <LiveSection
+            meetings={meetings}
+            onOpenCreateMeeting={requireAdmin(() => setIsMeetingModalOpen(true), 'Kuunda Kikao Kipya')}
+            onJoinMeeting={requireAuth((meeting) => setActiveLiveMeeting(meeting), 'kujiunga na kikao')}
+            onSetReminder={requireAuth((title) => {
+              showToast(`Reminder set for "${title}"`);
+            }, 'kuweka ukumbusho wa kikao')}
+            language={language}
+            onShowToast={showToast}
+          />
+        )}
+
+        {/* Global Shopping Marketplace - shown when 'all' or 'shop' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'shop') && (
+          <ShopSection
+            products={products}
+            onAddToCart={requireAuth((name, price, image, id) => handleAddToCart(name, price, image, id), 'kuongeza bidhaa kwenye kikapu')}
+            onOpenCart={requireAuth(() => setIsCartOpen(true), 'kufungua kikapu cha ununuzi')}
+            onOpenAddProduct={requireAdmin(() => setIsAddProductModalOpen(true), 'Kuweka Bidhaa Mpya')}
+            onWishlistToggle={requireAuth((product) => {
+              showToast(`Updated wishlist for ${product.name}`);
+            }, 'kuhifadhi bidhaa')}
+            onOpenProductDetail={requireAuth((prod) => setSelectedProductDetail(prod), 'kufungua maelezo ya kina ya bidhaa')}
+            language={language}
+          />
+        )}
+
+        {/* Messages & Chat - shown when 'all' or 'messages' */}
+        {(activeDashboardFilter === 'all' || activeDashboardFilter === 'messages') && (
+          <ChatSection
+            conversations={conversations}
+            activeConversation={activeConversation}
+            messages={messages}
+            onSelectConversation={requireAuth((conv) => setActiveConversation(conv), 'kufungua mazungumzo')}
+            onSendMessage={requireAuth((text) => handleSendMessage(text), 'kutuma ujumbe')}
+            onStartVideoCall={requireAuth((name) => {
+              showToast(`Initiating secure video call with ${name}...`);
+            }, 'kuanza simu ya video')}
+            onStartVoiceCall={requireAuth((name) => {
+              showToast(`Initiating secure voice call with ${name}...`);
+            }, 'kuanza simu ya sauti')}
+            language={language}
+          />
+        )}
 
         {/* Creator Studio - Admin Protected */}
         <CreatorStudio
@@ -1142,7 +1296,13 @@ export default function App() {
                 payload.duration
               );
             } else {
-              handleCreatePost(payload.description, 'Creator Studio', payload.title);
+              handleCreatePost(
+                payload.description,
+                'Creator Studio',
+                payload.title,
+                payload.imageUrl,
+                payload.imageAspectRatio
+              );
             }
           }, 'Kuchapisha Maudhui kwenye Studio')}
           language={language}
@@ -1339,6 +1499,46 @@ export default function App() {
         onShowToast={showToast}
       />
 
+      {/* 9. MEMBER PROFILE MODAL (REAL IMAGE & BANNER, FOLLOW FOR MEMBERS) */}
+      <MemberProfileModal
+        isOpen={isMemberProfileModalOpen}
+        onClose={() => setIsMemberProfileModalOpen(false)}
+        member={selectedMemberProfile}
+        currentUser={currentUser}
+        onUpdateMemberProfile={(updated) => {
+          if (selectedMemberProfile) {
+            const merged = { ...selectedMemberProfile, ...updated };
+            setSelectedMemberProfile(merged);
+            const map = getStoredMembersMap();
+            map[merged.name.toLowerCase().trim()] = merged;
+            saveStoredMembersMap(map);
+            setMembersList(Object.values(map));
+          }
+        }}
+        onOpenChatWithMember={(contactName) => {
+          setIsMemberProfileModalOpen(false);
+          scrollToSection('messages');
+        }}
+        onToggleFollowMember={handleToggleFollowMember}
+        language={language}
+        onShowToast={showToast}
+      />
+
+      {/* 10. COMMUNITY FOLLOWERS & MEMBERS DIRECTORY MODAL */}
+      <CommunityMembersModal
+        isOpen={isCommunityMembersModalOpen}
+        onClose={() => setIsCommunityMembersModalOpen(false)}
+        members={membersList}
+        currentUser={currentUser}
+        onSelectMember={(member) => {
+          setSelectedMemberProfile(member);
+          setIsMemberProfileModalOpen(true);
+        }}
+        onToggleFollowMember={handleToggleFollowMember}
+        language={language}
+        onShowToast={showToast}
+      />
+
       {/* 9. BEST AND MODERN PRELOADER */}
       {showPreloader && (
         <Preloader
@@ -1374,6 +1574,9 @@ export default function App() {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* PWA OFFLINE CONNECTIVITY INDICATOR */}
+      <OfflineIndicator language={language} />
     </div>
   );
 }

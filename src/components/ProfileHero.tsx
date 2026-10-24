@@ -54,13 +54,13 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight font-editorial text-white drop-shadow-lg leading-none py-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight font-editorial text-white drop-shadow-lg leading-snug py-1">
             Ev Dr. Boniphace J. Ndege
           </h1>
 
-          {/* Invitation to bring work for Graphic Design & Website Design */}
-          <div className="mt-2.5 p-3 sm:p-3.5 rounded-2xl bg-black/60 backdrop-blur-md border border-[#ffd700]/50 shadow-2xl max-w-xl">
-            <div className="flex items-center gap-2 text-[11px] font-black text-[#ffd700] uppercase tracking-wider mb-1">
+          {/* Invitation to bring work for Graphic Design & Website Design - direct on banner with transparent background */}
+          <div className="pt-2 max-w-xl bg-transparent border-0 shadow-none">
+            <div className="flex items-center gap-2 text-xs font-black text-[#ffd700] uppercase tracking-wider mb-1 drop-shadow-md">
               <span className="w-2 h-2 rounded-full bg-[#ffd700] animate-pulse" />
               <span>
                 {isSwahili
@@ -68,7 +68,7 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
                   : 'Open for Graphic Design & Website Design Projects'}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-emerald-50 leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-emerald-100/95 leading-relaxed font-medium drop-shadow-md">
               {isSwahili
                 ? 'Karibuni sana wanachama na wateja wote kuleta kazi zenu kwa ajili ya Ubunifu wa Michoro (Graphic Design), Kutengeneza Tovuti (Website Design), Uchapishaji wa Vitabu na Masuluhisho ya Kidijitali ya Kisasa!'
                 : 'Welcome all members and clients! Bring your projects for professional Graphic Design, Website Design, Book Publishing, and High-End Digital Solutions.'}
@@ -110,7 +110,7 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-emerald-50 font-editorial">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 dark:text-emerald-50 font-editorial">
                     {profile.name || 'Ev Dr. Boniphace J. Ndege'}
                   </h2>
                   <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-[#ffd700] to-[#f5d061] text-slate-950 shadow-[0_0_10px_rgba(255,215,0,0.4)] border border-[#ffd700]">

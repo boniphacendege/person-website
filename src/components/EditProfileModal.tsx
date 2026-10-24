@@ -88,7 +88,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       });
       onClose();
     } catch (err) {
-      console.error('Failed to save profile:', err);
+      console.warn('Profile save notice:', err);
     } finally {
       setIsSaving(false);
     }

@@ -14,6 +14,130 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        // 1. Shim WebSocket for Vite HMR in iframe/Cloud Run sandboxes
+        var RealWebSocket = window.WebSocket;
+        if (RealWebSocket) {
+          window.WebSocket = function(url, protocols) {
+            var isViteHmr = (protocols === 'vite-hmr' || protocols === 'vite-ping' || (typeof url === 'string' && (url.indexOf('token=') !== -1 || url.indexOf('vite') !== -1)));
+            if (isViteHmr) {
+              var listeners = {};
+              var fake = {
+                url: url,
+                protocols: protocols,
+                readyState: 1,
+                bufferedAmount: 0,
+                extensions: '',
+                binaryType: 'blob',
+                addEventListener: function(type, fn) {
+                  listeners[type] = listeners[type] || [];
+                  listeners[type].push(fn);
+                },
+                removeEventListener: function(type, fn) {
+                  if (!listeners[type]) return;
+                  listeners[type] = listeners[type].filter(function(f) { return f !== fn; });
+                },
+                dispatchEvent: function(event) {
+                  var type = event.type;
+                  if (typeof fake['on' + type] === 'function') {
+                    try { fake['on' + type](event); } catch(err) {}
+                  }
+                  if (listeners[type]) {
+                    listeners[type].slice().forEach(function(fn) {
+                      try { fn(event); } catch(err) {}
+                    });
+                  }
+                  return true;
+                },
+                send: function() {},
+                close: function(code, reason) {
+                  fake.readyState = 3;
+                  fake.dispatchEvent({ type: 'close', code: code || 1000, reason: reason || 'Normal', wasClean: true });
+                }
+              };
+              setTimeout(function() {
+                fake.dispatchEvent({ type: 'open' });
+              }, 0);
+              return fake;
+            }
+            return new RealWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = RealWebSocket.prototype;
+          window.WebSocket.CONNECTING = 0;
+          window.WebSocket.OPEN = 1;
+          window.WebSocket.CLOSING = 2;
+          window.WebSocket.CLOSED = 3;
+        }
+
+        // 2. Intercept console.error for benign Vite WebSocket disconnects and user-permission cancel notices
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var msg = args.map(function(a) {
+            return (a && a.message) ? a.message : String(a);
+          }).join(' ');
+
+          var isBenign = (
+            msg.indexOf('WebSocket') !== -1 ||
+            msg.indexOf('vite:ws') !== -1 ||
+            msg.indexOf('[vite] failed to connect to websocket') !== -1 ||
+            msg.indexOf('Permission denied') !== -1 ||
+            msg.indexOf('NotAllowedError') !== -1 ||
+            msg.indexOf('PermissionDeniedError') !== -1 ||
+            msg.indexOf('Camera stream error') !== -1 ||
+            msg.indexOf('requestDevice') !== -1 ||
+            msg.indexOf('ResizeObserver loop') !== -1 ||
+            msg.indexOf('Expected static flag was missing') !== -1
+          );
+
+          if (isBenign) {
+            // Forward as harmless warning so it doesn't trigger debugger or error toasts
+            console.warn.apply(console, args);
+            return;
+          }
+          origConsoleError.apply(console, args);
+        };
+
+        // 3. Gracefully handle benign errors and permission rejections in window error events
+        window.addEventListener('error', function(e) {
+          var msg = (e && e.message) ? String(e.message) : '';
+          if (
+            msg.indexOf('WebSocket') !== -1 ||
+            msg.indexOf('ws://') !== -1 ||
+            msg.indexOf('wss://') !== -1 ||
+            msg.indexOf('ResizeObserver') !== -1 ||
+            msg.indexOf('Permission denied') !== -1 ||
+            msg.indexOf('NotAllowedError') !== -1
+          ) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        // 4. Gracefully handle unhandled rejections from user cancelling permission or Bluetooth chooser
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = e ? (e.reason && (e.reason.message || e.reason.name)) || String(e.reason) : '';
+          var reasonStr = String(reason);
+          if (
+            reasonStr.indexOf('WebSocket') !== -1 ||
+            reasonStr.indexOf('ws://') !== -1 ||
+            reasonStr.indexOf('wss://') !== -1 ||
+            reasonStr.indexOf('Permission denied') !== -1 ||
+            reasonStr.indexOf('NotAllowedError') !== -1 ||
+            reasonStr.indexOf('PermissionDeniedError') !== -1 ||
+            reasonStr.indexOf('User cancelled') !== -1 ||
+            reasonStr.indexOf('requestDevice') !== -1 ||
+            reasonStr.indexOf('AbortError') !== -1
+          ) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

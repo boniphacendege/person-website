@@ -13,7 +13,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ onOpenContact, langu
     <section id="about" className="py-12 max-w-6xl mx-auto px-4 border-t border-emerald-950/10 dark:border-emerald-500/15">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial">
             {isSwahili ? 'Kuhusu Ev Dr. Boniphace J. Ndege' : 'About Ev Dr. Boniphace J. Ndege'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-emerald-300/70 mt-1 max-w-xl">

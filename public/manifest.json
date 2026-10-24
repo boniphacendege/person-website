@@ -1,13 +1,46 @@
 {
   "id": "/",
-  "name": "Boniphace Ndege — Creator Hub & Reading Library",
+  "name": "Ev Dr. Boniphace J. Ndege - Global Shopping & Creator Hub",
   "short_name": "BoniphaceHub",
-  "description": "Read blogs, book excerpts, and shop online with full offline data support.",
+  "description": "Personal ecosystem, media, books, videos, live conferencing, messaging, and Global Shopping marketplace by Ev Dr. Boniphace J. Ndege.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#063b22",
-  "background_color": "#07160f",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "theme_color": "#087a45",
+  "background_color": "#06160e",
+  "categories": ["books", "shopping", "business", "social", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Open Shop Marketplace",
+      "short_name": "Open Shop",
+      "description": "Browse electronics, tech gear, and certified merchandise with fast delivery",
+      "url": "/#shop",
+      "icons": [{ "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Meeting & Broadcast",
+      "short_name": "Live Meeting",
+      "description": "Join live room broadcast with Ev Dr. Boniphace J. Ndege and community members",
+      "url": "/#live",
+      "icons": [{ "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Digital Books Library",
+      "short_name": "Books",
+      "description": "Instant offline reading, book excerpts, and published author collection",
+      "url": "/#books",
+      "icons": [{ "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Book Publishing & Creator Studio",
+      "short_name": "Creator Studio",
+      "description": "Upload book manuscripts, design 3:4 covers, and publish articles",
+      "url": "/#creator",
+      "icons": [{ "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg",
@@ -20,6 +53,18 @@
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"
+    },
+    {
+      "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/src/assets/images/boniphace_avatar_1791315268492.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }

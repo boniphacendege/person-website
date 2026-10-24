@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Library,
   Feather,
+  RotateCcw,
 } from 'lucide-react';
 import { BookChapter } from '../types';
 import * as api from '../api';
@@ -472,28 +473,32 @@ Monetization without compounding leverage leads to exhaustion. By productizing y
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* LEFT COLUMN: Book Cover, Meta & Pricing (4 Cols) */}
             <div className="lg:col-span-4 space-y-4">
-              {/* Cover Upload & Preview */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-emerald-200 mb-1.5 flex items-center justify-between">
-                  <span>{isSwahili ? 'Picha ya Jalada (Cover)' : 'Book Cover Image'}</span>
-                  <span className="text-[10px] text-[#ffd700] font-semibold">3:4 Ratio</span>
-                </label>
+              {/* Cover Upload & Preview Card Container */}
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-100/90 dark:bg-[#06180f] border-2 border-emerald-950/10 dark:border-emerald-500/25 shadow-md space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-emerald-950/70">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-emerald-100">
+                    Book Cover Image (3:4 Ratio)
+                  </label>
+                  <span className="text-[10px] text-[#ffd700] font-black uppercase px-2 py-0.5 rounded-md bg-[#ffd700]/15 border border-[#ffd700]/30 shadow-xs">
+                    JPG, PNG, WebP
+                  </span>
+                </div>
 
                 {/* 3:4 Classic Book Proportion Frame */}
-                <div className="relative aspect-[3/4] w-full max-w-[210px] mx-auto rounded-2xl overflow-hidden bg-slate-900 border-2 border-[#ffd700]/40 shadow-xl group">
+                <div className="relative aspect-[3/4] w-full max-w-[210px] mx-auto rounded-2xl overflow-hidden bg-slate-900 border-2 border-[#ffd700]/60 shadow-2xl group">
                   <img
-                    src={coverUrl}
+                    src={coverUrl || '/src/assets/images/book_digital_vision_1791315278826.jpg'}
                     alt="Book Cover Preview"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
 
                   {/* Spine simulated 3D gradient overlay */}
-                  <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/60 to-transparent pointer-events-none" />
+                  <div className="absolute inset-y-0 left-0 w-3.5 bg-gradient-to-r from-black/70 to-transparent pointer-events-none" />
 
                   {/* Overlay upload button */}
                   <div
                     onClick={() => coverInputRef.current?.click()}
-                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-center cursor-pointer text-white"
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-center cursor-pointer text-white"
                   >
                     <ImageIcon className="w-6 h-6 mb-1 text-[#ffd700]" />
                     <span className="text-xs font-bold">
@@ -520,25 +525,62 @@ Monetization without compounding leverage leads to exhaustion. By productizing y
                   className="hidden"
                 />
 
-                <div className="flex justify-center gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => coverInputRef.current?.click()}
-                    className="py-1 px-3 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-emerald-950/60 hover:bg-slate-200 dark:hover:bg-emerald-900 text-slate-800 dark:text-emerald-100 border border-emerald-950/10 dark:border-emerald-500/25 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-[#ffd700]" />
-                    <span>{isSwahili ? 'Pakia Jalada' : 'Upload Cover'}</span>
-                  </button>
+                {/* Cover Path Input */}
+                <div>
+                  <input
+                    type="text"
+                    value={coverUrl}
+                    onChange={(e) => setCoverUrl(e.target.value)}
+                    placeholder="/src/assets/images/book_digital_vision_1791315278826.jpg"
+                    className="w-full h-9.5 px-3 text-xs font-mono bg-white dark:bg-emerald-950/60 border border-slate-200 dark:border-emerald-500/30 rounded-xl text-slate-900 dark:text-emerald-50 focus:outline-none focus:border-[#ffd700] shadow-xs"
+                  />
+                </div>
+
+                {/* Upload action within dedicated card */}
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#03150b] border border-slate-200 dark:border-emerald-500/25 shadow-sm flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-[#ffd700] shrink-0">
+                      <Upload className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 dark:text-emerald-100 truncate">
+                        {isSwahili ? 'Pakia Picha ya Jalada' : 'Upload Cover Image'}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {isSwahili ? 'Chagua faili kutoka kifaa' : 'Choose JPG, PNG, or WebP from device'}
+                      </p>
+                    </div>
+                  </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setCoverUrl('/src/assets/images/boniphace_cover_1791315258070.jpg')
-                    }
-                    className="py-1 px-2.5 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                    onClick={() => coverInputRef.current?.click()}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
                   >
-                    {isSwahili ? 'Tumia Jalada Asili' : 'Default Cover'}
+                    <Upload className="w-3.5 h-3.5 text-[#ffd700]" />
+                    <span>{isSwahili ? 'Pakia' : 'Upload'}</span>
                   </button>
+                </div>
+
+                {/* Default Section */}
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-bold text-slate-700 dark:text-emerald-300">
+                    Default:
+                  </div>
+                  {/* Default path and reset button within card */}
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-black/50 border border-slate-200/80 dark:border-emerald-500/20 flex items-center justify-between gap-2 shadow-sm">
+                    <span className="font-mono text-[11px] text-slate-600 dark:text-emerald-200/90 truncate select-all">
+                      /src/assets/images/book_digital_vision_1791315278826.jpg
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCoverUrl('/src/assets/images/book_digital_vision_1791315278826.jpg')}
+                      className="text-[#ffd700] hover:underline font-bold text-xs cursor-pointer shrink-0 ml-1 px-2.5 py-1 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 border border-[#ffd700]/30 transition-colors flex items-center gap-1 active:scale-95"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>{isSwahili ? 'Weka Upya' : 'Reset'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

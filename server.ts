@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,6 +7,9 @@ import dotenv from 'dotenv';
 import { storage } from './server/storage';
 
 dotenv.config();
+
+// HMR is disabled in AI Studio environment per runtime constraints
+process.env.DISABLE_HMR = 'true';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -504,7 +508,7 @@ app.get('/api/posts', (_req: Request, res: Response) => {
 });
 
 app.post('/api/posts', (req: Request, res: Response) => {
-  const { content, tag, imageUrl, title } = req.body;
+  const { content, tag, imageUrl, title, imageAspectRatio } = req.body;
   if (!content) {
     return res.status(400).json({ error: 'Post content is required' });
   }
@@ -521,6 +525,7 @@ app.post('/api/posts', (req: Request, res: Response) => {
     title: title || undefined,
     content,
     imageUrl: imageUrl || undefined,
+    imageAspectRatio: (imageAspectRatio === '1:1' ? '1:1' : imageAspectRatio === '16:9' ? '16:9' : undefined) as ('1:1' | '16:9' | undefined),
     likesCount: 0,
     isLiked: false,
     isSaved: false,
@@ -1135,6 +1140,7 @@ app.get('/api/stats', (_req: Request, res: Response) => {
 // Static or Vite integration
 async function setupServer() {
   const isProduction = process.env.NODE_ENV === 'production';
+  const httpServer = http.createServer(app);
 
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
@@ -1143,7 +1149,7 @@ async function setupServer() {
         middlewareMode: true,
         host: '0.0.0.0',
         port,
-        hmr: process.env.DISABLE_HMR !== 'true',
+        hmr: false,
       },
       appType: 'spa',
     });
@@ -1157,7 +1163,7 @@ async function setupServer() {
     });
   }
 
-  app.listen(port, '0.0.0.0', () => {
+  httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${port}`);
   });
 }

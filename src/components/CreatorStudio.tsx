@@ -23,6 +23,8 @@ import {
   Share2,
   AlertCircle,
   HelpCircle,
+  X,
+  RotateCcw,
 } from 'lucide-react';
 
 interface CreatorStudioProps {
@@ -36,6 +38,7 @@ interface CreatorStudioProps {
     duration?: string;
     category?: string;
     imageUrl?: string;
+    imageAspectRatio?: '1:1' | '16:9';
     price?: number;
     pdfUrl?: string;
   }) => void;
@@ -62,6 +65,8 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
   const [visibility, setVisibility] = useState('Public');
   const [postTitle, setPostTitle] = useState('');
   const [postDescription, setPostDescription] = useState('');
+  const [postImageUrl, setPostImageUrl] = useState('');
+  const [postImageAspectRatio, setPostImageAspectRatio] = useState<'16:9' | '1:1'>('16:9');
 
   // 2. Book Publishing State
   const [bookTitle, setBookTitle] = useState('');
@@ -112,9 +117,12 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
       visibility,
       title: postTitle.trim() || 'New Update',
       description: postDescription,
+      imageUrl: postImageUrl.trim() || undefined,
+      imageAspectRatio: postImageAspectRatio,
     });
     setPostTitle('');
     setPostDescription('');
+    setPostImageUrl('');
     onShowToast?.(isSwahili ? 'Chapisho limechapishwa kikamilifu!' : 'Post published successfully!');
   };
 
@@ -231,7 +239,7 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
             {isSwahili ? 'Kipengele cha Msimamizi Pekee' : 'Admin Only Feature'}
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial">
           {isSwahili ? 'Studio ya Muundaji' : 'Creator Studio'}
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-emerald-300/70 mt-1">
@@ -378,6 +386,131 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
                     />
                   </div>
 
+                  {/* Add image upload Section inside card grey background color */}
+                  <div className="p-4 rounded-2xl bg-zinc-800/90 dark:bg-zinc-850/95 border border-zinc-700/80 text-white space-y-3 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-200">
+                        {isSwahili ? 'Picha ya Chapisho (Image Upload)' : 'Post Image (Image Upload)'}
+                      </label>
+                      {/* Selective ratio 16:9 or 1:1 */}
+                      <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-zinc-600/50">
+                        <button
+                          type="button"
+                          onClick={() => setPostImageAspectRatio('16:9')}
+                          className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            postImageAspectRatio === '16:9'
+                              ? 'bg-[#ffd700] text-slate-950 shadow-sm'
+                              : 'text-zinc-300 hover:text-white'
+                          }`}
+                        >
+                          16:9
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPostImageAspectRatio('1:1')}
+                          className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            postImageAspectRatio === '1:1'
+                              ? 'bg-[#ffd700] text-slate-950 shadow-sm'
+                              : 'text-zinc-300 hover:text-white'
+                          }`}
+                        >
+                          1:1
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {/* Paste image URL */}
+                      <div>
+                        <input
+                          type="url"
+                          value={postImageUrl}
+                          onChange={(e) => setPostImageUrl(e.target.value)}
+                          placeholder="Paste image URL..."
+                          className="w-full h-10 px-3.5 text-xs bg-zinc-900/90 border border-zinc-700 rounded-xl text-white placeholder-zinc-400 focus:outline-none focus:border-[#ffd700]"
+                        />
+                      </div>
+
+                      {/* or divider */}
+                      <div className="flex items-center gap-3">
+                        <div className="h-[1px] flex-1 bg-zinc-700/60" />
+                        <span className="text-[10px] uppercase font-bold text-zinc-400">or</span>
+                        <div className="h-[1px] flex-1 bg-zinc-700/60" />
+                      </div>
+
+                      {/* browse file... and Upload Image */}
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex-1 h-10 px-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-900 text-zinc-300 hover:text-white border border-zinc-700 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-all">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  if (typeof evt.target?.result === 'string') {
+                                    setPostImageUrl(evt.target.result);
+                                  }
+                                };
+                                reader.readAsDataURL(f);
+                              }
+                            }}
+                          />
+                          <Upload className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>browse file...</span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.accept = 'image/*';
+                            fileInput.onchange = (e: any) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  if (typeof evt.target?.result === 'string') {
+                                    setPostImageUrl(evt.target.result);
+                                  }
+                                };
+                                reader.readAsDataURL(f);
+                              }
+                            };
+                            fileInput.click();
+                          }}
+                          className="h-10 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shrink-0 active:scale-95"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[#ffd700]" />
+                          <span>Upload Image</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {postImageUrl && (
+                      <div className="relative rounded-xl overflow-hidden border border-zinc-600 bg-black/80 shadow-inner">
+                        <div
+                          className={`w-full ${
+                            postImageAspectRatio === '1:1' ? 'aspect-square max-h-56' : 'aspect-video max-h-48'
+                          } flex items-center justify-center overflow-hidden bg-black`}
+                        >
+                          <img src={postImageUrl} alt="Post preview" className="w-full h-full object-cover" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPostImageUrl('')}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-rose-600 text-white border border-white/20 transition-all cursor-pointer shadow-md"
+                          title="Remove image"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-700/20 transition-all cursor-pointer"
@@ -405,26 +538,50 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
                   </div>
 
                   {/* Book Cover Frame (3:4 Ratio) */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 flex flex-col sm:flex-row items-center gap-4">
-                    <div className="relative aspect-[3/4] w-24 rounded-xl overflow-hidden shadow-lg border border-[#ffd700]/40 bg-black shrink-0">
-                      <img src={bookCoverUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div className="relative aspect-[3/4] w-28 sm:w-32 rounded-xl overflow-hidden shadow-lg border-2 border-[#ffd700]/60 bg-black shrink-0">
+                      <img src={bookCoverUrl || '/src/assets/images/book_digital_vision_1791315278826.jpg'} alt="Book Cover preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/60 to-transparent pointer-events-none" />
                     </div>
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-900 dark:text-emerald-50">
+
+                    <div className="space-y-3 flex-1 w-full">
+                      <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-emerald-950/70">
+                        <span className="text-xs font-bold text-slate-900 dark:text-emerald-50">
                           {isSwahili ? 'Picha ya Jalada (Uwiano wa 3:4)' : 'Book Cover Image (3:4 Ratio)'}
                         </span>
-                        <span className="text-[10px] text-[#ffd700] font-bold">JPG, PNG, WebP</span>
+                        <span className="text-[10px] text-[#ffd700] font-black uppercase px-2 py-0.5 rounded-md bg-[#ffd700]/15 border border-[#ffd700]/30 shadow-xs">
+                          JPG, PNG, WebP
+                        </span>
                       </div>
-                      <div className="flex gap-2">
+
+                      {/* Image Path / URL Input */}
+                      <div>
                         <input
                           type="text"
                           value={bookCoverUrl}
                           onChange={(e) => setBookCoverUrl(e.target.value)}
-                          placeholder="Image URL or browse..."
-                          className="flex-1 h-9 px-3 text-xs bg-white dark:bg-emerald-950/60 border border-emerald-900/20 rounded-xl text-slate-900 dark:text-emerald-50"
+                          placeholder="/src/assets/images/book_digital_vision_1791315278826.jpg"
+                          className="w-full h-9.5 px-3 text-xs font-mono bg-white dark:bg-emerald-950/60 border border-emerald-900/20 dark:border-emerald-500/30 rounded-xl text-slate-900 dark:text-emerald-50 focus:outline-none focus:border-[#ffd700] shadow-xs"
                         />
-                        <label className="px-3 h-9 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-600 dark:text-[#ffd700] border border-emerald-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0">
+                      </div>
+
+                      {/* Upload within Card */}
+                      <div className="p-3 rounded-2xl bg-white dark:bg-[#03150b] border border-slate-200 dark:border-emerald-500/25 shadow-sm flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-[#ffd700] shrink-0">
+                            <Upload className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-800 dark:text-emerald-100 truncate">
+                              {isSwahili ? 'Pakia Picha ya Jalada' : 'Upload Cover Image'}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {isSwahili ? 'Chagua faili kutoka kifaa' : 'Choose JPG, PNG, or WebP from device'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <label className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95">
                           <input
                             type="file"
                             accept="image/*"
@@ -434,9 +591,30 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
                               if (f) setBookCoverUrl(URL.createObjectURL(f));
                             }}
                           />
-                          <Upload className="w-3.5 h-3.5" />
+                          <Upload className="w-3.5 h-3.5 text-[#ffd700]" />
                           <span>{isSwahili ? 'Pakia' : 'Upload'}</span>
                         </label>
+                      </div>
+
+                      {/* Default Section */}
+                      <div className="space-y-1.5">
+                        <div className="text-[11px] font-bold text-slate-700 dark:text-emerald-300">
+                          Default:
+                        </div>
+                        {/* Default path and reset button within card */}
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-black/50 border border-slate-200/80 dark:border-emerald-500/20 flex items-center justify-between gap-2 shadow-sm">
+                          <span className="font-mono text-[11px] text-slate-600 dark:text-emerald-200/90 truncate select-all">
+                            /src/assets/images/book_digital_vision_1791315278826.jpg
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setBookCoverUrl('/src/assets/images/book_digital_vision_1791315278826.jpg')}
+                            className="text-[#ffd700] hover:underline font-bold text-xs cursor-pointer shrink-0 ml-1 px-2.5 py-1 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 border border-[#ffd700]/30 transition-colors flex items-center gap-1 active:scale-95"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>{isSwahili ? 'Weka Upya' : 'Reset'}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -639,37 +817,73 @@ export const CreatorStudio: React.FC<CreatorStudioProps> = ({
                     </select>
                   </div>
 
-                  {/* Image Upload Part */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-emerald-950/40 border border-emerald-900/15 space-y-2">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-emerald-300">
-                      {isSwahili ? 'Picha ya Makala (Image Upload)' : 'Featured Article Image (Upload / URL)'}
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="url"
-                        value={blogImageUrl}
-                        onChange={(e) => setBlogImageUrl(e.target.value)}
-                        placeholder="Paste image URL or browse file..."
-                        className="flex-1 h-9 px-3 text-xs bg-white dark:bg-emerald-950/60 border border-emerald-900/20 rounded-xl text-slate-900 dark:text-emerald-50"
-                      />
-                      <label className="px-3 h-9 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-600 dark:text-[#ffd700] border border-emerald-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) setBlogImageUrl(URL.createObjectURL(f));
-                          }}
-                        />
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{isSwahili ? 'Pakia Picha' : 'Upload Image'}</span>
+                  {/* Feature Article Image inside card grey background color */}
+                  <div className="p-4 rounded-2xl bg-zinc-800/90 dark:bg-zinc-850/95 border border-zinc-700/80 text-white space-y-3 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-200">
+                        {isSwahili ? 'Picha ya Makala (Feature Article Image)' : 'Feature Article Image'}
                       </label>
+                      <span className="text-[10px] text-[#ffd700] font-bold">16:9 / 1:1</span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {/* Paste image URL */}
+                      <div>
+                        <input
+                          type="url"
+                          value={blogImageUrl}
+                          onChange={(e) => setBlogImageUrl(e.target.value)}
+                          placeholder="Paste image URL..."
+                          className="w-full h-10 px-3.5 text-xs bg-zinc-900/90 border border-zinc-700 rounded-xl text-white placeholder-zinc-400 focus:outline-none focus:border-[#ffd700]"
+                        />
+                      </div>
+
+                      {/* or divider */}
+                      <div className="flex items-center gap-3">
+                        <div className="h-[1px] flex-1 bg-zinc-700/60" />
+                        <span className="text-[10px] uppercase font-bold text-zinc-400">or</span>
+                        <div className="h-[1px] flex-1 bg-zinc-700/60" />
+                      </div>
+
+                      {/* browse file... and Upload Image */}
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex-1 h-10 px-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-900 text-zinc-300 hover:text-white border border-zinc-700 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-all">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) setBlogImageUrl(URL.createObjectURL(f));
+                            }}
+                          />
+                          <Upload className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>browse file...</span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.accept = 'image/*';
+                            fileInput.onchange = (e: any) => {
+                              const f = e.target.files?.[0];
+                              if (f) setBlogImageUrl(URL.createObjectURL(f));
+                            };
+                            fileInput.click();
+                          }}
+                          className="h-10 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shrink-0 active:scale-95"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[#ffd700]" />
+                          <span>Upload Image</span>
+                        </button>
+                      </div>
                     </div>
 
                     {blogImageUrl && (
-                      <div className="relative aspect-video rounded-xl overflow-hidden border border-emerald-500/30 max-h-36 bg-black">
-                        <img src={blogImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="relative aspect-video rounded-xl overflow-hidden border border-zinc-600 max-h-44 bg-black/80 shadow-inner">
+                        <img src={blogImageUrl} alt="Feature article preview" className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>

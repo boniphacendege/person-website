@@ -31,6 +31,7 @@ export interface Post {
   content: string;
   contentSwahili?: string;
   imageUrl?: string;
+  imageAspectRatio?: '1:1' | '16:9';
   likesCount: number;
   isLiked?: boolean;
   isSaved?: boolean;

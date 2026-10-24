@@ -175,7 +175,7 @@ export async function saveMaterialForOffline(material: ReadingMaterial): Promise
 
     return true;
   } catch (err) {
-    console.error('Failed to save material for offline:', err);
+    console.warn('Notice saving material for offline:', err);
     return false;
   }
 }

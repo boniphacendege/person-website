@@ -130,14 +130,12 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
     } catch {}
   };
 
-  if (!material) return null;
-
-  const chapters: BookChapter[] = material.chapters || [];
+  const chapters: BookChapter[] = material?.chapters || [];
   const hasChapters = chapters.length > 0;
   const activeChapter = hasChapters ? chapters[activeChapterIndex] : null;
 
   // Active content being read
-  const currentContentText = activeChapter ? activeChapter.content : material.content;
+  const currentContentText = activeChapter ? activeChapter.content : (material?.content || '');
 
   // Compute matches count for search
   const matchesCount = useMemo(() => {
@@ -150,6 +148,8 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
       return 0;
     }
   }, [currentContentText, searchQuery]);
+
+  if (!material) return null;
 
   // Handle scroll and dynamically update reading progress
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -363,6 +363,15 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
               ))}
             </div>
 
+            {/* Reading Progress Indicator Badge */}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/70 border border-emerald-500/30 text-[11px] font-bold text-emerald-700 dark:text-[#ffd700] shrink-0 shadow-xs"
+              title={isSwahili ? 'Maendeleo ya Usomaji' : 'Reading Progress'}
+            >
+              <div className="w-2 h-2 rounded-full bg-[#ffd700] animate-pulse" />
+              <span>{scrollProgress}% {isSwahili ? 'imesomwa' : 'read'}</span>
+            </div>
+
             {/* Close Button */}
             <button
               onClick={onClose}
@@ -454,8 +463,33 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="p-6 sm:p-10 overflow-y-auto flex-1 space-y-6 scroll-smooth"
+            className="p-6 sm:p-10 overflow-y-auto flex-1 space-y-6 scroll-smooth relative"
           >
+            {/* Sticky Reading Progress Indicator at top of modal content as user scrolls */}
+            <div className="sticky top-0 z-20 -mx-6 sm:-mx-10 -mt-6 sm:-mt-10 mb-4 px-6 sm:px-10 py-2.5 bg-white/95 dark:bg-[#07160f]/95 backdrop-blur-md border-b border-emerald-950/10 dark:border-emerald-500/20 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-[#ffd700] shrink-0" />
+                <span className="text-xs font-bold text-slate-800 dark:text-emerald-100 truncate max-w-[200px] sm:max-w-md">
+                  {material.title}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[11px] font-black text-emerald-700 dark:text-[#ffd700] bg-emerald-500/10 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/25">
+                  {scrollProgress}% {isSwahili ? 'imesomwa' : 'read'}
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-emerald-300/70 hidden sm:inline flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-emerald-500 inline" />
+                  {wordsRemaining > 0
+                    ? isSwahili
+                      ? `dakika ~${remainingMins} zimebaki`
+                      : `~${remainingMins} min remaining`
+                    : isSwahili
+                    ? 'Umemaliza'
+                    : 'Completed'}
+                </span>
+              </div>
+            </div>
+
             {/* Book Cover & Title Meta */}
             <div className="pb-6 border-b border-emerald-950/10 dark:border-emerald-500/15">
               {Boolean(material.coverUrl) && (

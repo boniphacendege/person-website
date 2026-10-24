@@ -106,6 +106,7 @@ export async function createPostApi(payload: {
   tag?: string;
   title?: string;
   imageUrl?: string;
+  imageAspectRatio?: '1:1' | '16:9';
 }): Promise<Post> {
   const res = await fetch('/api/posts', {
     method: 'POST',

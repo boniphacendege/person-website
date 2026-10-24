@@ -13,6 +13,8 @@ import {
   Sparkles,
   CloudCheck,
   X,
+  Search,
+  Share2,
 } from 'lucide-react';
 import { BlogArticle } from '../types';
 import { isMaterialSavedSync } from '../utils/offlineStorage';
@@ -22,6 +24,7 @@ interface BlogSectionProps {
   onOpenWriteBlog: () => void;
   onReadArticle: (article: BlogArticle) => void;
   language?: string;
+  onShowToast?: (msg: string) => void;
 }
 
 export const BlogSection: React.FC<BlogSectionProps> = ({
@@ -29,8 +32,10 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
   onOpenWriteBlog,
   onReadArticle,
   language,
+  onShowToast,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const isSwahili = language === 'Swahili';
 
   // Dynamically extract unique categories from existing blogs
@@ -73,18 +78,30 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
     return counts;
   }, [blogs]);
 
-  // Filtered blogs based on selected category
+  // Filtered blogs based on selected category and keyword search query
   const filteredBlogs = useMemo(() => {
-    if (selectedCategory === 'All') return blogs;
-
-    const sel = selectedCategory.toLowerCase();
     return blogs.filter((b) => {
-      const cat = (b.category || '').toLowerCase();
-      if (sel === 'tech' && (cat === 'tech' || cat === 'technology')) return true;
-      if (sel === 'technology' && (cat === 'tech' || cat === 'technology')) return true;
-      return cat === sel;
+      if (selectedCategory !== 'All') {
+        const sel = selectedCategory.toLowerCase();
+        const cat = (b.category || '').toLowerCase();
+        const matchCategory =
+          (sel === 'tech' && (cat === 'tech' || cat === 'technology')) ||
+          (sel === 'technology' && (cat === 'tech' || cat === 'technology')) ||
+          cat === sel;
+        if (!matchCategory) return false;
+      }
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        b.title.toLowerCase().includes(q) ||
+        (b.titleSwahili && b.titleSwahili.toLowerCase().includes(q)) ||
+        (b.excerpt && b.excerpt.toLowerCase().includes(q)) ||
+        (b.content && b.content.toLowerCase().includes(q)) ||
+        (b.category && b.category.toLowerCase().includes(q))
+      );
     });
-  }, [blogs, selectedCategory]);
+  }, [blogs, selectedCategory, searchQuery]);
 
   // Icon helper based on category name
   const getCategoryIcon = (category: string) => {
@@ -128,7 +145,7 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
               {blogs.length} {isSwahili ? 'Makala' : 'Articles'}
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial mt-1">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial mt-1">
             {isSwahili ? 'Makala za Ev Dr. Boniphace J. Ndege' : 'Ev Dr. Boniphace J. Ndege Blog'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-emerald-300/70 mt-1">
@@ -148,12 +165,27 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
       </div>
 
       {/* ========================================================= */}
-      {/* DYNAMIC CATEGORY FILTERING SYSTEM                         */}
+      {/* DYNAMIC SEARCH & CATEGORY FILTERING SYSTEM                */}
       {/* ========================================================= */}
-      <div className="mb-8 p-3 rounded-2xl bg-slate-100/70 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 backdrop-blur-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-emerald-300/80 shrink-0 mr-1">
-          <Filter className="w-4 h-4 text-emerald-600 dark:text-[#ffd700]" />
-          <span>{isSwahili ? 'Chuja kwa Kategoria:' : 'Filter by Category:'}</span>
+      <div className="mb-8 p-3 rounded-2xl bg-slate-100/70 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 backdrop-blur-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Search input */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isSwahili ? 'Tafuta makala kwa jina, mada...' : 'Search articles by title, topic...'}
+            className="w-full h-9 pl-9 pr-8 text-xs bg-white dark:bg-[#071910] border border-emerald-950/10 dark:border-emerald-500/20 rounded-xl text-slate-900 dark:text-emerald-50 placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-200"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Category Pills List */}
@@ -197,11 +229,14 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
           })}
         </div>
 
-        {/* Reset Filter Button if a specific category is active */}
-        {selectedCategory !== 'All' && (
+        {/* Reset Filter Button if a specific category or search is active */}
+        {(selectedCategory !== 'All' || searchQuery) && (
           <button
             type="button"
-            onClick={() => setSelectedCategory('All')}
+            onClick={() => {
+              setSelectedCategory('All');
+              setSearchQuery('');
+            }}
             className="text-xs font-semibold text-slate-500 dark:text-emerald-300/70 hover:text-emerald-600 dark:hover:text-[#ffd700] flex items-center gap-1 transition-colors self-end md:self-auto cursor-pointer shrink-0"
           >
             <X className="w-3.5 h-3.5" />
@@ -274,13 +309,32 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => onReadArticle(article)}
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 hover:bg-gradient-to-r hover:from-emerald-600 hover:to-emerald-700 hover:text-white border border-emerald-900/10 dark:border-emerald-500/20 hover:border-[#ffd700]/50 hover:shadow-[0_0_12px_rgba(5,150,105,0.3)] transition-all cursor-pointer"
-                  >
-                    <span>{isSwahili ? 'Soma Makala Kamili' : 'Read Article'}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#ffd700]" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onReadArticle(article)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 hover:bg-gradient-to-r hover:from-emerald-600 hover:to-emerald-700 hover:text-white border border-emerald-900/10 dark:border-emerald-500/20 hover:border-[#ffd700]/50 hover:shadow-[0_0_12px_rgba(5,150,105,0.3)] transition-all cursor-pointer"
+                    >
+                      <span>{isSwahili ? 'Soma Makala Kamili' : 'Read Article'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#ffd700]" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const shareUrl = `${window.location.origin}#blog?article=${article.id}`;
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(shareUrl);
+                          onShowToast?.(isSwahili ? 'Kiungo cha makala kimenakiliwa!' : 'Article link copied to clipboard!');
+                        }
+                      }}
+                      className="p-2.5 rounded-xl border border-emerald-900/10 dark:border-emerald-500/20 text-slate-500 dark:text-emerald-300/70 hover:text-[#ffd700] hover:bg-emerald-950/60 transition-colors cursor-pointer shrink-0"
+                      title={isSwahili ? 'Gawa makala' : 'Share article'}
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </article>
             );

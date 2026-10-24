@@ -1,5 +1,5 @@
-import React from 'react';
-import { Video, Play, Upload, Volume2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Video, Play, Upload, Volume2, Search, Filter, X } from 'lucide-react';
 import { VideoItem } from '../types';
 
 interface VideosSectionProps {
@@ -16,10 +16,38 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
   language,
 }) => {
   const isSwahili = language === 'Swahili';
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    videos.forEach((v) => {
+      if (v.category?.trim()) set.add(v.category.trim());
+    });
+    return ['All', ...Array.from(set)];
+  }, [videos]);
+
+  const filteredVideos = useMemo(() => {
+    return videos.filter((v) => {
+      const matchCat =
+        selectedCategory === 'All' ||
+        (v.category || '').toLowerCase() === selectedCategory.toLowerCase();
+      if (!matchCat) return false;
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        v.title.toLowerCase().includes(q) ||
+        (v.titleSwahili && v.titleSwahili.toLowerCase().includes(q)) ||
+        (v.description && v.description.toLowerCase().includes(q)) ||
+        (v.author && v.author.toLowerCase().includes(q))
+      );
+    });
+  }, [videos, selectedCategory, searchQuery]);
 
   return (
     <section id="videos" className="py-12 max-w-6xl mx-auto px-4 border-t border-emerald-950/10 dark:border-emerald-500/15">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-emerald-50 tracking-tight font-editorial">
             {isSwahili ? 'Video' : 'Videos'}
@@ -40,8 +68,71 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {videos.map((vid) => (
+      {/* Video Search and Category Filter Bar */}
+      <div className="mb-6 p-3 rounded-2xl bg-slate-100/70 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 backdrop-blur-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isSwahili ? 'Tafuta video kwa jina, mada...' : 'Search videos by title, topic...'}
+            className="w-full h-9 pl-9 pr-8 text-xs bg-white dark:bg-[#071910] border border-emerald-950/10 dark:border-emerald-500/20 rounded-xl text-slate-900 dark:text-emerald-50 placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-200"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {categories.map((cat) => {
+            const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-[#00a651] via-[#054425] to-[#042817] text-[#ffd700] border border-[#ffd700]/70 shadow-[0_0_10px_rgba(5,150,105,0.4)]'
+                    : 'bg-white dark:bg-[#071910] text-slate-700 dark:text-emerald-200/80 hover:text-slate-900 dark:hover:text-white border border-emerald-950/10 dark:border-emerald-500/15'
+                }`}
+              >
+                {cat === 'All' ? (isSwahili ? 'Video Zote' : 'All Videos') : cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {filteredVideos.length === 0 ? (
+        <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-emerald-950/20 border border-emerald-950/10 dark:border-emerald-500/20">
+          <Video className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-emerald-300/70">
+            {isSwahili ? 'Hakuna video zinazolingana na utafutaji wako.' : 'No videos match your search or filter.'}
+          </p>
+          {(searchQuery || selectedCategory !== 'All') && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('All');
+              }}
+              className="mt-3 text-xs text-[#ffd700] hover:underline font-bold cursor-pointer"
+            >
+              {isSwahili ? 'Weka upya vichungi vyote' : 'Reset all filters'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredVideos.map((vid) => (
           <div
             key={vid.id}
             className="group card-neon-gold rounded-3xl overflow-hidden flex flex-col justify-between"
@@ -107,6 +198,7 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
           </div>
         ))}
       </div>
+      )}
     </section>
   );
 };

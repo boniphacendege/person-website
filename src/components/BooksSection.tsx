@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BookOpen,
   Upload,
@@ -11,6 +11,9 @@ import {
   Layers,
   CheckCircle2,
   RefreshCw,
+  Search,
+  Filter,
+  X,
 } from 'lucide-react';
 import { Book } from '../types';
 import * as api from '../api';
@@ -36,6 +39,36 @@ export const BooksSection: React.FC<BooksSectionProps> = ({
 }) => {
   const isSwahili = language === 'Swahili';
   const [uploadingCoverForId, setUploadingCoverForId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  // Categories extracted from books
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    books.forEach((b) => {
+      if (b.category?.trim()) set.add(b.category.trim());
+    });
+    return ['All', ...Array.from(set)];
+  }, [books]);
+
+  // Filtered books based on search query and category
+  const filteredBooks = useMemo(() => {
+    return books.filter((b) => {
+      const matchCat =
+        selectedCategory === 'All' ||
+        (b.category || '').toLowerCase() === selectedCategory.toLowerCase();
+      if (!matchCat) return false;
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        b.title.toLowerCase().includes(q) ||
+        (b.author && b.author.toLowerCase().includes(q)) ||
+        (b.description && b.description.toLowerCase().includes(q)) ||
+        (b.category && b.category.toLowerCase().includes(q))
+      );
+    });
+  }, [books, selectedCategory, searchQuery]);
 
   const formatTZS = (num: number) => {
     return 'TZS ' + Number(num).toLocaleString('en-TZ');
@@ -129,9 +162,72 @@ export const BooksSection: React.FC<BooksSectionProps> = ({
         </div>
       </div>
 
+      {/* Search and Category Filter Bar */}
+      <div className="mb-6 p-3 rounded-2xl bg-slate-100/70 dark:bg-emerald-950/40 border border-emerald-950/10 dark:border-emerald-500/20 backdrop-blur-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isSwahili ? 'Tafuta vitabu kwa jina, mwandishi, mada...' : 'Search books by title, author, topic...'}
+            className="w-full h-9.5 pl-9 pr-8 text-xs bg-white dark:bg-[#071910] border border-emerald-950/10 dark:border-emerald-500/20 rounded-xl text-slate-900 dark:text-emerald-50 placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-200"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {categories.map((cat) => {
+            const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-[#00a651] via-[#054425] to-[#042817] text-[#ffd700] border border-[#ffd700]/70 shadow-[0_0_10px_rgba(5,150,105,0.4)]'
+                    : 'bg-white dark:bg-[#071910] text-slate-700 dark:text-emerald-200/80 hover:text-slate-900 dark:hover:text-white border border-emerald-950/10 dark:border-emerald-500/15'
+                }`}
+              >
+                {cat === 'All' ? (isSwahili ? 'Vitabu Vyote' : 'All Books') : cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Books Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {books.map((book) => {
+      {filteredBooks.length === 0 ? (
+        <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-emerald-950/20 border border-emerald-950/10 dark:border-emerald-500/20">
+          <BookOpen className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-emerald-300/70">
+            {isSwahili ? 'Hakuna vitabu vinavyolingana na utafutaji wako.' : 'No books match your search or filter.'}
+          </p>
+          {(searchQuery || selectedCategory !== 'All') && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('All');
+              }}
+              className="mt-3 text-xs text-[#ffd700] hover:underline font-bold cursor-pointer"
+            >
+              {isSwahili ? 'Weka upya vichungi vyote' : 'Reset all filters'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredBooks.map((book) => {
           const isUploadingThisCover = uploadingCoverForId === book.id;
           const hasPdf = Boolean(book.pdfUrl);
           const hasChapters = Array.isArray(book.chapters) && book.chapters.length > 0;
@@ -273,6 +369,7 @@ export const BooksSection: React.FC<BooksSectionProps> = ({
           );
         })}
       </div>
+      )}
     </section>
   );
 };

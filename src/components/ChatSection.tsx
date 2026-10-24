@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Send,
   Video,
@@ -6,6 +6,10 @@ import {
   Circle,
   MessageSquare,
   Sparkles,
+  Search,
+  Paperclip,
+  Image as ImageIcon,
+  X,
 } from 'lucide-react';
 import { Conversation, Message } from '../types';
 
@@ -31,8 +35,20 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   language = 'English',
 }) => {
   const [inputText, setInputText] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isSwahili = language === 'Swahili';
+
+  const filteredConversations = useMemo(() => {
+    if (!contactSearch.trim()) return conversations;
+    const q = contactSearch.toLowerCase().trim();
+    return conversations.filter(
+      (c) =>
+        c.contactName.toLowerCase().includes(q) ||
+        (c.role && c.role.toLowerCase().includes(q)) ||
+        (c.lastMessage && c.lastMessage.toLowerCase().includes(q))
+    );
+  }, [conversations, contactSearch]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,6 +59,14 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
     if (!inputText.trim()) return;
     onSendMessage(inputText.trim());
     setInputText('');
+  };
+
+  const handleSendAttachment = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      onSendMessage(`📎 [Attachment: ${file.name}]`);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -64,14 +88,33 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
 
         {/* Left Contacts List */}
         <div className="md:col-span-5 lg:col-span-4 border-r border-emerald-950/10 dark:border-emerald-500/15 flex flex-col">
-          <div className="p-4 border-b border-emerald-950/10 dark:border-emerald-500/15 bg-slate-50/50 dark:bg-emerald-950/30">
+          <div className="p-3 border-b border-emerald-950/10 dark:border-emerald-500/15 bg-slate-50/50 dark:bg-emerald-950/30 space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-emerald-400/60">
               {isSwahili ? 'Mazungumzo Yanayoendelea' : 'Active Conversations'}
             </h3>
+            {/* Contact Search Input */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                placeholder={isSwahili ? 'Tafuta mwasiliani...' : 'Search contacts...'}
+                className="w-full h-8 pl-8 pr-7 text-xs bg-white dark:bg-[#071910] border border-emerald-950/10 dark:border-emerald-500/20 rounded-xl text-slate-900 dark:text-emerald-50 placeholder-slate-400 focus:outline-none focus:border-[#ffd700]"
+              />
+              {contactSearch && (
+                <button
+                  onClick={() => setContactSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="divide-y divide-emerald-950/10 dark:divide-emerald-500/15 overflow-y-auto max-h-[500px]">
-            {conversations.map((conv) => {
+            {filteredConversations.map((conv) => {
               const isActive = activeConversation?.id === conv.id;
               return (
                 <button
@@ -196,6 +239,20 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
                   onSubmit={handleSend}
                   className="relative flex items-center bg-slate-100/90 dark:bg-emerald-950/50 border border-emerald-950/15 dark:border-emerald-500/25 rounded-2xl p-1.5 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:shadow-[0_0_15px_-3px_rgba(5,120,75,0.25)] transition-all"
                 >
+                  <label
+                    className="p-2 text-slate-400 hover:text-[#ffd700] transition-colors cursor-pointer shrink-0"
+                    title={isSwahili ? 'Ambatisha faili au picha' : 'Attach file or image'}
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) handleSendAttachment(e.target.files[0]);
+                      }}
+                    />
+                  </label>
+
                   <input
                     type="text"
                     value={inputText}
@@ -205,7 +262,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
                         ? `Andika ujumbe kwa ${activeConversation.contactName}...`
                         : `Write a message to ${activeConversation.contactName}...`
                     }
-                    className="flex-1 min-w-0 bg-transparent px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-emerald-50 placeholder-slate-400 dark:placeholder-emerald-400/50 focus:outline-none"
+                    className="flex-1 min-w-0 bg-transparent px-2.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-emerald-50 placeholder-slate-400 dark:placeholder-emerald-400/50 focus:outline-none"
                   />
 
                   <button

@@ -42,6 +42,7 @@ export interface MemberProfileData {
   recentActivitySwahili: string;
   statusBadge: string;
   isCurrentUser?: boolean;
+  isAdmin?: boolean;
 }
 
 interface MemberProfileModalProps {
@@ -67,21 +68,23 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
   language = 'English',
   onShowToast,
 }) => {
-  if (!isOpen || !member) return null;
-
   const isSwahili = language === 'Swahili';
   const isOwnProfile = Boolean(
-    member.isCurrentUser ||
-    (currentUser && (currentUser.email === member.id || currentUser.name.toLowerCase() === member.name.toLowerCase()))
+    member?.isCurrentUser ||
+    (currentUser && member && (currentUser.email === member.id || currentUser.name.toLowerCase() === member.name.toLowerCase()))
   );
 
-  const [avatar, setAvatar] = useState(member.avatarUrl);
-  const [banner, setBanner] = useState(member.bannerUrl);
-  const [bio, setBio] = useState(isSwahili ? (member.bioSwahili || member.bio) : (member.bio || member.bioSwahili));
-  const [location, setLocation] = useState(member.location || 'Tanzania');
+  const [avatar, setAvatar] = useState(member?.avatarUrl || '');
+  const [banner, setBanner] = useState(member?.bannerUrl || '');
+  const [bio, setBio] = useState(
+    member
+      ? (isSwahili ? (member.bioSwahili || member.bio) : (member.bio || member.bioSwahili))
+      : ''
+  );
+  const [location, setLocation] = useState(member?.location || 'Tanzania');
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const [isFollowed, setIsFollowed] = useState(Boolean(member.isFollowedByMe));
-  const [followers, setFollowers] = useState(member.followersCount || 120);
+  const [isFollowed, setIsFollowed] = useState(Boolean(member?.isFollowedByMe));
+  const [followers, setFollowers] = useState(member?.followersCount || 120);
 
   useEffect(() => {
     if (member) {
@@ -94,6 +97,8 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
       setIsEditingBio(false);
     }
   }, [member, isSwahili]);
+
+  if (!isOpen || !member) return null;
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,7 +166,7 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
         {/* Cover Banner Area */}
         <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-gradient-to-r from-emerald-950 to-[#032415] group shrink-0">
           <img
-            src={banner}
+            src={banner || '/src/assets/images/boniphace_cover_1791315258070.jpg'}
             alt={`${member.name} Banner`}
             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
           />
@@ -217,7 +222,7 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
               <div className="relative group/avatar shrink-0">
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden ring-4 ring-[#0b1c13] shadow-2xl bg-black border border-[#ffd700]/50">
                   <img
-                    src={avatar}
+                    src={avatar || '/src/assets/images/boniphace_avatar_1791315268492.jpg'}
                     alt={member.name}
                     className="w-full h-full object-cover object-center group-hover/avatar:brightness-90 transition-all"
                   />
